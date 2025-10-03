@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -10,19 +10,19 @@ function App() {
           Crypto & Stocks Dashboard
         </h1>
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => setCount((count) => count + 1)}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300"
           >
             Count is {count}
           </button>
         </div>
-        <p className="text-gray-600">
+        <p className="text-red-600">
           TailwindCSS is working! Ready to build the dashboard.
         </p>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

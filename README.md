@@ -14,11 +14,13 @@ A real-time financial dashboard displaying cryptocurrency and stock market data 
 ## APIs Used
 
 ### CoinGecko API (Cryptocurrency Data)
+
 - **Market Data**: `/coins/markets` - Top cryptocurrencies with price, market cap, and 24h changes
 - **Historical Data**: `/coins/{id}/market_chart` - Price history for chart visualization
 - **Documentation**: [CoinGecko API Docs](https://www.coingecko.com/en/api/documentation)
 
 ### Finnhub API (Stock Market Data)
+
 - **Real-time Quotes**: `/quote` - Latest stock prices and daily statistics
 - **Historical Data**: `/stock/candle` - OHLC data for candlestick charts
 - **Market News**: `/news` - Latest financial news and market updates
@@ -36,23 +38,27 @@ A real-time financial dashboard displaying cryptocurrency and stock market data 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone <repository-url>
 cd mkt-dashboard
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
 ```
