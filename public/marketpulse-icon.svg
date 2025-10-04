@@ -1,0 +1,19 @@
+<!-- save as marketpulse-icon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 64 64" role="img" aria-labelledby="mpTitle mpDesc">
+  <title id="mpTitle">MarketPulse icon</title>
+  <desc id="mpDesc">Small pulse chart icon representing MarketPulse</desc>
+
+  <!-- background circle -->
+  <rect width="64" height="64" rx="12" fill="#0f172a"/>
+
+  <!-- chart bars -->
+  <rect x="14" y="34" width="6" height="16" rx="1" fill="#06b6d4"/>
+  <rect x="26" y="26" width="6" height="24" rx="1" fill="#06b6d4"/>
+  <rect x="38" y="18" width="6" height="32" rx="1" fill="#06b6d4"/>
+
+  <!-- pulse line -->
+  <path d="M10 40 L18 28 L24 36 L30 22 L36 30 L46 18 L54 26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- subtle inner shadow (semi-transparent) -->
+  <ellipse cx="32" cy="46" rx="18" ry="4" fill="#000" opacity="0.12"/>
+</svg>
