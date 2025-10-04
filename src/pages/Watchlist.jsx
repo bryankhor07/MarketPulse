@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useWatchlist } from "../contexts/WatchlistContext.jsx";
-import WatchlistButton from "../components/WatchlistButton.jsx";
-import SparklineChart from "../components/SparklineChart.jsx";
-import { coingecko } from "../lib/coingecko.js";
+import { useState, useCallback } from "react";
 import { finnhub } from "../lib/finnhub.js";
+import { coingecko } from "../lib/coingecko.js";
+import SparklineChart from "../components/SparklineChart.jsx";
+import WatchlistButton from "../components/WatchlistButton.jsx";
+import { usePolling } from "../hooks/usePolling.js";
 
 export default function Watchlist() {
   const location = useLocation();
@@ -12,70 +13,77 @@ export default function Watchlist() {
   const params = new URLSearchParams(location.search);
   const currency = params.get("currency") || "USD";
 
-  const { getWatchlist, removeFromWatchlist } = useWatchlist();
+  const { getWatchlist } = useWatchlist();
   const watchlist = getWatchlist();
 
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   // Fetch current prices for all watchlist items
-  useEffect(() => {
-    async function fetchPrices() {
-      if (watchlist.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const priceData = {};
-
-      try {
-        // Fetch crypto prices
-        const cryptoItems = watchlist.filter((item) => item.type === "crypto");
-        if (cryptoItems.length > 0) {
-          const cryptoIds = cryptoItems.map((item) => item.id);
-          const marketData = await coingecko.getMarkets({
-            vs_currency: currency.toLowerCase(),
-            ids: cryptoIds.join(","),
-            per_page: cryptoItems.length,
-          });
-
-          if (marketData) {
-            marketData.forEach((coin) => {
-              priceData[`crypto:${coin.id}`] = {
-                price: coin.current_price,
-                change: coin.price_change_percentage_24h,
-              };
-            });
-          }
-        }
-
-        // Fetch stock prices
-        const stockItems = watchlist.filter((item) => item.type === "stock");
-        for (const item of stockItems) {
-          try {
-            const quote = await finnhub.quote(item.id);
-            if (quote.c && quote.pc) {
-              priceData[`stock:${item.id}`] = {
-                price: quote.c,
-                change: ((quote.c - quote.pc) / quote.pc) * 100,
-              };
-            }
-          } catch (error) {
-            console.error(`Failed to fetch price for ${item.id}:`, error);
-          }
-        }
-
-        setPrices(priceData);
-      } catch (error) {
-        console.error("Failed to fetch prices:", error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchPrices = useCallback(async () => {
+    if (watchlist.length === 0) {
+      setLoading(false);
+      return;
     }
 
-    fetchPrices();
+    setLoading(true);
+    const priceData = {};
+
+    try {
+      // Fetch crypto prices
+      const cryptoItems = watchlist.filter((item) => item.type === "crypto");
+      if (cryptoItems.length > 0) {
+        const cryptoIds = cryptoItems.map((item) => item.id);
+        const marketData = await coingecko.getMarkets({
+          vs_currency: currency.toLowerCase(),
+          ids: cryptoIds.join(","),
+          per_page: cryptoItems.length,
+        });
+
+        if (marketData) {
+          marketData.forEach((coin) => {
+            priceData[`crypto:${coin.id}`] = {
+              price: coin.current_price,
+              change: coin.price_change_percentage_24h,
+            };
+          });
+        }
+      }
+
+      // Fetch stock prices
+      const stockItems = watchlist.filter((item) => item.type === "stock");
+      for (const item of stockItems) {
+        try {
+          const quote = await finnhub.quote(item.id);
+          if (quote.c && quote.pc) {
+            priceData[`stock:${item.id}`] = {
+              price: quote.c,
+              change: ((quote.c - quote.pc) / quote.pc) * 100,
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to fetch price for ${item.id}:`, error);
+        }
+      }
+
+      setPrices(priceData);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error("Failed to fetch prices:", error);
+      throw error; // Re-throw to trigger polling backoff
+    } finally {
+      setLoading(false);
+    }
   }, [watchlist, currency]);
+
+  // Initial fetch and polling setup
+  usePolling(fetchPrices, 30 * 1000, {
+    enabled: watchlist.length > 0,
+    maxBackoff: 5 * 60 * 1000, // Max 5 minutes
+    backoffMultiplier: 2,
+    maxErrors: 5,
+  });
 
   const formatPrice = (value) => {
     try {
@@ -92,6 +100,16 @@ export default function Watchlist() {
 
   const handleItemClick = (item) => {
     navigate(`/details/${item.type}/${item.id}?${params.toString()}`);
+  };
+
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return "";
+    const now = new Date();
+    const diffSeconds = Math.floor((now - lastUpdate) / 1000);
+
+    if (diffSeconds < 60) return `Updated ${diffSeconds}s ago`;
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    return `Updated ${diffMinutes}m ago`;
   };
 
   if (watchlist.length === 0) {
@@ -134,13 +152,18 @@ export default function Watchlist() {
 
   return (
     <div className="max-w-5xl mx-auto p-4">
-      <h2 className="text-2xl font-semibold mb-2">Watchlist</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-2xl font-semibold">Watchlist</h2>
+        {lastUpdate && (
+          <div className="text-xs text-gray-500">{formatLastUpdate()}</div>
+        )}
+      </div>
       <p className="text-sm text-gray-600 mb-6">
         Currency: {currency} • {watchlist.length} item
         {watchlist.length !== 1 ? "s" : ""}
       </p>
 
-      {loading ? (
+      {loading && !Object.keys(prices).length ? (
         <div className="flex items-center justify-center h-32">
           <div className="text-gray-600">Loading prices...</div>
         </div>
@@ -201,7 +224,11 @@ export default function Watchlist() {
                       )}
                     </div>
 
-                    <WatchlistButton instrument={item} className="!w-8 !h-8" />
+                    <WatchlistButton
+                      instrument={item}
+                      className="!w-8 !h-8"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                 </div>
               </div>
