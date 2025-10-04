@@ -43,7 +43,7 @@ export default function NavBar() {
           className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           aria-label="MKT Dashboard Home"
         >
-          MKT Dashboard
+          MarketPulse
         </Link>
 
         <nav
