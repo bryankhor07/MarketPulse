@@ -59,10 +59,7 @@ async function quote(symbol) {
   if (!symbol) {
     throw new Error('Finnhub quote: "symbol" is required');
   }
-  const apiKey =
-    typeof process !== "undefined"
-      ? process.env?.VITE_FINNHUB_API_KEY
-      : undefined;
+  const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
   if (!apiKey) {
     throw new Error(
       "Finnhub API key missing. Set VITE_FINNHUB_API_KEY in your environment."
@@ -92,10 +89,7 @@ async function stockCandles(symbol, resolution, from, to) {
   if (from == null) throw new Error('Finnhub stockCandles: "from" is required');
   if (to == null) throw new Error('Finnhub stockCandles: "to" is required');
 
-  const apiKey =
-    typeof process !== "undefined"
-      ? process.env?.VITE_FINNHUB_API_KEY
-      : undefined;
+  const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
   if (!apiKey) {
     throw new Error(
       "Finnhub API key missing. Set VITE_FINNHUB_API_KEY in your environment."
@@ -113,9 +107,65 @@ async function stockCandles(symbol, resolution, from, to) {
   return cachedFetchJson(url.toString(), 60 * 1000);
 }
 
+/**
+ * Get general market news.
+ * Finnhub docs: GET /news
+ * @param {string} [category] - News category (e.g., 'general', 'forex', 'crypto', 'merger').
+ * @param {number} [minId] - The ID of the first news item to fetch.
+ * @returns {Promise<any>} Parsed news JSON.
+ */
+async function getNews(category = "general", minId = 0) {
+  const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Finnhub API key missing. Set VITE_FINNHUB_API_KEY in your environment."
+    );
+  }
+
+  const url = new URL(`${FINNHUB_BASE_URL}/news`);
+  url.searchParams.set("category", category);
+  url.searchParams.set("minId", String(minId));
+  url.searchParams.set("token", apiKey);
+
+  // News can be cached for a short time (e.g., 5 minutes)
+  return cachedFetchJson(url.toString(), 5 * 60 * 1000);
+}
+
+/**
+ * Get company-specific news.
+ * Finnhub docs: GET /company-news
+ * @param {string} symbol - Stock ticker symbol (e.g., 'AAPL').
+ * @param {string} from - Start date in YYYY-MM-DD format.
+ * @param {string} to - End date in YYYY-MM-DD format.
+ * @returns {Promise<any>} Parsed company news JSON.
+ */
+async function getCompanyNews(symbol, from, to) {
+  if (!symbol) throw new Error("Finnhub getCompanyNews: 'symbol' is required");
+  if (!from) throw new Error("Finnhub getCompanyNews: 'from' date is required");
+  if (!to) throw new Error("Finnhub getCompanyNews: 'to' date is required");
+
+  const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Finnhub API key missing. Set VITE_FINNHUB_API_KEY in your environment."
+    );
+  }
+
+  const url = new URL(`${FINNHUB_BASE_URL}/company-news`);
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("from", from);
+  url.searchParams.set("to", to);
+  url.searchParams.set("token", apiKey);
+
+  // Company news can be cached briefly (e.g., 10 minutes)
+  return cachedFetchJson(url.toString(), 10 * 60 * 1000);
+}
+
 export const finnhub = {
   quote,
   stockCandles,
+  getNews,
+  getCompanyNews,
 };
 
 export default finnhub;
