@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import PriceChart from "../components/PriceChart.jsx";
+import AlertManager from "../components/AlertManager.jsx";
 import { coingecko } from "../lib/coingecko.js";
 import { finnhub } from "../lib/finnhub.js";
 
@@ -202,6 +203,14 @@ export default function Details() {
       {/* Price Chart */}
       <div className="mb-6">
         <PriceChart type={type} id={id} currency={currency} />
+      </div>
+
+      {/* Alerts Panel */}
+      <div className="mb-6">
+        <AlertManager
+          instrument={{ type, id, name: details.name, symbol: details.symbol }}
+          currentPrice={details.currentPrice}
+        />
       </div>
 
       {/* Fundamentals Panel */}
