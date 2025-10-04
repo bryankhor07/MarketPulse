@@ -6,30 +6,28 @@ const STORAGE_KEY = "mkt-dashboard-watchlist";
 const ALERTS_STORAGE_KEY = "mkt-dashboard-alerts";
 
 export function WatchlistProvider({ children }) {
-  const [watchlist, setWatchlist] = useState([]);
-  const [alerts, setAlerts] = useState([]);
-
-  // Load from localStorage on mount
-  useEffect(() => {
+  // Initialize state from localStorage if available
+  const [watchlist, setWatchlist] = useState(() => {
     try {
-      const savedWatchlist = localStorage.getItem(STORAGE_KEY);
-      if (savedWatchlist) {
-        setWatchlist(JSON.parse(savedWatchlist));
-      }
-
-      const savedAlerts = localStorage.getItem(ALERTS_STORAGE_KEY);
-      if (savedAlerts) {
-        setAlerts(JSON.parse(savedAlerts));
-      }
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
     } catch (error) {
-      console.error(
-        "Failed to load watchlist/alerts from localStorage:",
-        error
-      );
+      console.error("Failed to load watchlist from localStorage:", error);
+      return [];
     }
-  }, []);
+  });
 
-  // Save to localStorage whenever watchlist changes
+  const [alerts, setAlerts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(ALERTS_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Failed to load alerts from localStorage:", error);
+      return [];
+    }
+  });
+
+  // Save to localStorage whenever watchlist changes (but not on initial load)
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlist));
@@ -38,7 +36,7 @@ export function WatchlistProvider({ children }) {
     }
   }, [watchlist]);
 
-  // Save to localStorage whenever alerts change
+  // Save to localStorage whenever alerts change (but not on initial load)
   useEffect(() => {
     try {
       localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(alerts));
