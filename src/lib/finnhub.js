@@ -1,59 +1,36 @@
-/**
- * Finnhub API wrapper with simple in-memory caching.
- * Docs:
- * - Quote: https://finnhub.io/docs/api/quote
- * - Stock Candles: https://finnhub.io/docs/api/stock-candles
- */
+import { cache } from "./cache.js";
 
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
 
-// In-memory cache keyed by URL.
-const cache = new Map();
-
 /**
- * Fetch JSON with simple cache.
- * @param {string} url - Full request URL.
- * @param {number} ttlMs - Time to live in milliseconds.
- * @returns {Promise<any>} Parsed JSON response.
+ * Fetch JSON with caching support
  */
-async function cachedFetchJson(url, ttlMs) {
-  const now = Date.now();
-  const hit = cache.get(url);
-  if (hit && hit.expiresAt > now) {
-    return hit.data;
+async function cachedFetchJson(url, ttlMs = 60 * 1000) {
+  const cacheKey = url;
+
+  // Check cache first
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   const response = await fetch(url);
   if (!response.ok) {
-    let details = "";
-    try {
-      const maybeJson = await response.json();
-      details =
-        typeof maybeJson === "object"
-          ? JSON.stringify(maybeJson)
-          : String(maybeJson);
-    } catch (_) {
-      // ignore JSON parse error
-    }
-    const error = new Error(
-      `Finnhub request failed: ${response.status} ${response.statusText}${
-        details ? " - " + details : ""
-      }`
+    throw new Error(
+      `Finnhub API error: ${response.status} ${response.statusText}`
     );
-    error.status = response.status;
-    throw error;
   }
 
   const data = await response.json();
-  cache.set(url, { data, expiresAt: now + ttlMs });
+
+  // Cache the result
+  cache.set(cacheKey, data, ttlMs);
+
   return data;
 }
 
 /**
- * Get a real-time quote for a stock symbol.
- * Finnhub docs: GET /quote
- * @param {string} symbol - Stock ticker symbol (e.g., 'AAPL').
- * @returns {Promise<any>} Parsed quote JSON.
+ * Get a real-time quote for a stock symbol
  */
 async function quote(symbol) {
   if (!symbol) {
@@ -69,18 +46,12 @@ async function quote(symbol) {
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("token", apiKey);
 
-  // Quotes move quickly; cache for a short time (e.g., 15 seconds)
+  // Quotes move quickly; cache for 15 seconds
   return cachedFetchJson(url.toString(), 15 * 1000);
 }
 
 /**
- * Get historical stock candles.
- * Finnhub docs: GET /stock/candle
- * @param {string} symbol - Stock ticker symbol (e.g., 'AAPL').
- * @param {string|number} resolution - Supported: 1, 5, 15, 30, 60, D, W, M
- * @param {number} from - UNIX timestamp (seconds).
- * @param {number} to - UNIX timestamp (seconds).
- * @returns {Promise<any>} Parsed candles JSON.
+ * Get historical stock candles
  */
 async function stockCandles(symbol, resolution, from, to) {
   if (!symbol) throw new Error('Finnhub stockCandles: "symbol" is required');
@@ -103,16 +74,12 @@ async function stockCandles(symbol, resolution, from, to) {
   url.searchParams.set("to", String(to));
   url.searchParams.set("token", apiKey);
 
-  // Candles data can be cached briefly (e.g., 60 seconds)
+  // Candles data can be cached for 1 minute
   return cachedFetchJson(url.toString(), 60 * 1000);
 }
 
 /**
- * Get general market news.
- * Finnhub docs: GET /news
- * @param {string} [category] - News category (e.g., 'general', 'forex', 'crypto', 'merger').
- * @param {number} [minId] - The ID of the first news item to fetch.
- * @returns {Promise<any>} Parsed news JSON.
+ * Get general market news
  */
 async function getNews(category = "general", minId = 0) {
   const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
@@ -127,17 +94,12 @@ async function getNews(category = "general", minId = 0) {
   url.searchParams.set("minId", String(minId));
   url.searchParams.set("token", apiKey);
 
-  // News can be cached for a short time (e.g., 5 minutes)
+  // News can be cached for 5 minutes
   return cachedFetchJson(url.toString(), 5 * 60 * 1000);
 }
 
 /**
- * Get company-specific news.
- * Finnhub docs: GET /company-news
- * @param {string} symbol - Stock ticker symbol (e.g., 'AAPL').
- * @param {string} from - Start date in YYYY-MM-DD format.
- * @param {string} to - End date in YYYY-MM-DD format.
- * @returns {Promise<any>} Parsed company news JSON.
+ * Get company-specific news
  */
 async function getCompanyNews(symbol, from, to) {
   if (!symbol) throw new Error("Finnhub getCompanyNews: 'symbol' is required");
@@ -157,7 +119,7 @@ async function getCompanyNews(symbol, from, to) {
   url.searchParams.set("to", to);
   url.searchParams.set("token", apiKey);
 
-  // Company news can be cached briefly (e.g., 10 minutes)
+  // Company news can be cached for 10 minutes
   return cachedFetchJson(url.toString(), 10 * 60 * 1000);
 }
 
