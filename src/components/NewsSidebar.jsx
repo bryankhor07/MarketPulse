@@ -98,7 +98,7 @@ export default function NewsSidebar({ type, symbol }) {
 
   if (loading) {
     return (
-      <div className="w-80 bg-white rounded-lg border p-4">
+      <div className="w-80 bg-white rounded-lg border p-4 dark:bg-gray-800">
         <h3 className="text-lg font-semibold mb-4">Latest News</h3>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -114,7 +114,7 @@ export default function NewsSidebar({ type, symbol }) {
 
   if (error) {
     return (
-      <div className="w-80 bg-white rounded-lg border p-4">
+      <div className="w-80 bg-white rounded-lg border p-4 dark:bg-gray-800">
         <h3 className="text-lg font-semibold mb-4">Latest News</h3>
         <div className="text-red-600 text-sm">
           <p>Failed to load news</p>
@@ -126,7 +126,7 @@ export default function NewsSidebar({ type, symbol }) {
 
   if (news.length === 0) {
     return (
-      <div className="w-80 bg-white rounded-lg border p-4">
+      <div className="w-80 bg-white rounded-lg border p-4 dark:bg-gray-800">
         <h3 className="text-lg font-semibold mb-4">Latest News</h3>
         <div className="text-gray-500 text-sm">No news available</div>
       </div>
@@ -134,8 +134,8 @@ export default function NewsSidebar({ type, symbol }) {
   }
 
   return (
-    <div className="w-70 bg-white rounded-lg border p-4">
-      <h3 className="text-lg font-semibold mb-4">
+    <div className="w-70 bg-white rounded-lg border p-4 dark:bg-gray-800">
+      <h3 className="text-lg font-semibold mb-4 dark:text-white">
         Latest News
         {symbol && (
           <span className="text-sm text-gray-600 font-normal ml-2">
@@ -148,24 +148,24 @@ export default function NewsSidebar({ type, symbol }) {
         {news.map((article, index) => (
           <div
             key={index}
-            className="border-b border-gray-100 pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded transition-colors"
+            className="border-b border-gray-100 pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50  dark:hover:bg-gray-900 p-2 -m-2 rounded transition-colors"
             onClick={() => handleNewsClick(article.url)}
           >
-            <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 hover:text-blue-600">
+            <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 dark:text-white dark:hover:text-blue-600">
               {article.headline}
             </h4>
 
             <div className="flex items-center justify-between text-xs text-gray-500">
-              <span className="truncate">
+              <span className="truncate dark:text-gray-400">
                 {article.source || "Unknown Source"}
               </span>
-              <span className="ml-2 flex-shrink-0">
+              <span className="ml-2 flex-shrink-0 dark:text-gray-400">
                 {formatTime(article.datetime)}
               </span>
             </div>
 
             {article.summary && (
-              <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+              <p className="text-xs text-gray-600 mt-2 line-clamp-2 dark:text-gray-400">
                 {article.summary}
               </p>
             )}
