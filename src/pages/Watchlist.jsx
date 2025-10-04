@@ -96,7 +96,7 @@ export default function Watchlist() {
 
   if (watchlist.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto p-4">
+      <div className="max-w-5xl mx-auto p-4">
         <h2 className="text-2xl font-semibold mb-2">Watchlist</h2>
         <p className="text-sm text-gray-600 mb-6">Currency: {currency}</p>
         <div className="rounded-lg border bg-white p-8 text-center">
@@ -133,7 +133,7 @@ export default function Watchlist() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="max-w-5xl mx-auto p-4">
       <h2 className="text-2xl font-semibold mb-2">Watchlist</h2>
       <p className="text-sm text-gray-600 mb-6">
         Currency: {currency} • {watchlist.length} item
