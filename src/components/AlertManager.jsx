@@ -33,9 +33,11 @@ export default function AlertManager({ instrument, currentPrice }) {
   }
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg">
+    <div className="bg-gray-50 p-4 rounded-lg dark:bg-gray-800">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium text-gray-900">Price Alerts</h4>
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+          Price Alerts
+        </h4>
         <button
           onClick={() => setShowForm(!showForm)}
           className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
