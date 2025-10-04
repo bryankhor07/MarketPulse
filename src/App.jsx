@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { WatchlistProvider } from "./contexts/WatchlistContext.jsx";
+import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import NavBar from "./components/NavBar.jsx";
 import NewsSidebar from "./components/NewsSidebar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -51,11 +52,13 @@ function AppContent() {
 
 function App() {
   return (
-    <WatchlistProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </WatchlistProvider>
+    <ThemeProvider>
+      <WatchlistProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </WatchlistProvider>
+    </ThemeProvider>
   );
 }
 
