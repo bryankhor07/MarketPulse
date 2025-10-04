@@ -38,6 +38,11 @@ export default function NavBar() {
   return (
     <header className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-40 border-b dark:border-gray-700">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
+        <img
+          src="/marketpulse-icon.svg"
+          alt="MarketPulse icon"
+          className="w-8 h-8"
+        />
         <Link
           to={`/${queryString}`}
           className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
