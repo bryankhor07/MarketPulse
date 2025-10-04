@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import InstrumentCard from "../components/InstrumentCard.jsx";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { coingecko } from "../lib/coingecko.js";
+import InstrumentCard from "../components/InstrumentCard.jsx";
 import { finnhub } from "../lib/finnhub.js";
+import { usePolling } from "../hooks/usePolling.js";
 
 export default function Dashboard() {
   const location = useLocation();
@@ -24,92 +25,105 @@ export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [lastUpdate, setLastUpdate] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        if (type === "crypto") {
-          // Use CoinGecko markets endpoint, order by market cap desc by default
-          const data = await coingecko.getMarkets({
-            vs_currency: currency.toLowerCase(),
-            order: "market_cap_desc",
-            per_page: 100,
-            page: 1,
-            price_change_percentage: timeframe === "7d" ? "7d" : "24h",
-          });
-          setItems(
-            Array.isArray(data)
-              ? data.map((d) => ({
-                  type: "crypto",
-                  id: d.id,
-                  name: d.name,
-                  symbol: d.symbol?.toUpperCase(),
-                  price: d.current_price,
-                  changePct:
-                    timeframe === "7d"
-                      ? d.price_change_percentage_7d_in_currency
-                      : d.price_change_percentage_24h_in_currency,
-                  marketCap: d.market_cap,
-                  volume: d.total_volume,
-                  image: d.image,
-                }))
-              : []
-          );
-        } else {
-          // Stocks: Finnhub does not provide a single "top movers" endpoint on free tier
-          // For demo, pick a representative list of tickers and fetch quotes, then sort by daily change
-          const symbols = [
-            "AAPL",
-            "MSFT",
-            "GOOGL",
-            "AMZN",
-            "NVDA",
-            "TSLA",
-            "META",
-            "BRK.B",
-            "JPM",
-            "V",
-          ];
-          const results = await Promise.all(
-            symbols.map(async (s) => {
-              try {
-                const q = await finnhub.quote(s);
-                // q.c: current price, q.pc: previous close
-                const changePct =
-                  q.c && q.pc ? ((q.c - q.pc) / q.pc) * 100 : null;
-                return {
-                  type: "stock",
-                  id: s,
-                  name: s,
-                  symbol: s,
-                  price: q.c ?? null,
-                  changePct,
-                  marketCap: null,
-                  volume: q.v ?? null,
-                  image: null,
-                };
-              } catch {
-                return null;
-              }
-            })
-          );
-          const filtered = results.filter(Boolean);
-          filtered.sort(
-            (a, b) => (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity)
-          );
-          setItems(filtered);
-        }
-      } catch (e) {
-        setError(e?.message || "Failed to load data");
-        setItems([]);
-      } finally {
-        setLoading(false);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (type === "crypto") {
+        // Use CoinGecko markets endpoint, order by market cap desc by default
+        const data = await coingecko.getMarkets({
+          vs_currency: currency.toLowerCase(),
+          order: "market_cap_desc",
+          per_page: 100,
+          page: 1,
+          price_change_percentage: timeframe === "7d" ? "7d" : "24h",
+        });
+        setItems(
+          Array.isArray(data)
+            ? data.map((d) => ({
+                type: "crypto",
+                id: d.id,
+                name: d.name,
+                symbol: d.symbol?.toUpperCase(),
+                price: d.current_price,
+                changePct:
+                  timeframe === "7d"
+                    ? d.price_change_percentage_7d_in_currency
+                    : d.price_change_percentage_24h_in_currency,
+                marketCap: d.market_cap,
+                volume: d.total_volume,
+                image: d.image,
+              }))
+            : []
+        );
+      } else {
+        // Stocks: Finnhub does not provide a single "top movers" endpoint on free tier
+        // For demo, pick a representative list of tickers and fetch quotes, then sort by daily change
+        const symbols = [
+          "AAPL",
+          "MSFT",
+          "GOOGL",
+          "AMZN",
+          "NVDA",
+          "TSLA",
+          "META",
+          "BRK.B",
+          "JPM",
+          "V",
+        ];
+        const results = await Promise.all(
+          symbols.map(async (s) => {
+            try {
+              const q = await finnhub.quote(s);
+              // q.c: current price, q.pc: previous close
+              const changePct =
+                q.c && q.pc ? ((q.c - q.pc) / q.pc) * 100 : null;
+              return {
+                type: "stock",
+                id: s,
+                name: s,
+                symbol: s,
+                price: q.c ?? null,
+                changePct,
+                marketCap: null,
+                volume: q.v ?? null,
+                image: null,
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+        const filtered = results.filter(Boolean);
+        filtered.sort(
+          (a, b) => (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity)
+        );
+        setItems(filtered);
       }
+      setLastUpdate(new Date());
+    } catch (e) {
+      setError(e?.message || "Failed to load data");
+      setItems([]);
+      throw e; // Re-throw to trigger polling backoff
+    } finally {
+      setLoading(false);
     }
-    load();
   }, [type, currency, timeframe]);
+
+  // Initial load
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Poll for updates every 60 seconds
+  usePolling(loadData, 60 * 1000, {
+    enabled: true,
+    maxBackoff: 5 * 60 * 1000, // Max 5 minutes
+    backoffMultiplier: 2,
+    maxErrors: 5,
+  });
 
   const filtered = useMemo(() => {
     if (!debounced) return items;
@@ -126,6 +140,16 @@ export default function Dashboard() {
     else next.set(key, value);
     navigate({ pathname: location.pathname, search: `?${next.toString()}` });
   }
+
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return "";
+    const now = new Date();
+    const diffSeconds = Math.floor((now - lastUpdate) / 1000);
+
+    if (diffSeconds < 60) return `Updated ${diffSeconds}s ago`;
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    return `Updated ${diffMinutes}m ago`;
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4">
@@ -168,17 +192,24 @@ export default function Dashboard() {
           </select>
         </div>
 
-        <div>
+        <div className="flex flex-col gap-2">
           <input
             className="border rounded px-3 py-2 text-sm w-64"
             placeholder="Search ticker or coin..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {lastUpdate && (
+            <div className="text-xs text-gray-500 text-right">
+              {formatLastUpdate()}
+            </div>
+          )}
         </div>
       </div>
 
-      {loading && <div className="text-gray-600">Loading...</div>}
+      {loading && !items.length && (
+        <div className="text-gray-600">Loading...</div>
+      )}
       {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
