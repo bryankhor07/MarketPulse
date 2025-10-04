@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import WatchlistButton from "./WatchlistButton.jsx";
 
 export default function InstrumentCard({
   type,
@@ -9,6 +10,7 @@ export default function InstrumentCard({
   changePct,
   marketCap,
   volume,
+  image,
   onClick,
 }) {
   const changeColor = useMemo(() => {
@@ -17,16 +19,17 @@ export default function InstrumentCard({
   }, [changePct]);
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left rounded-lg border bg-white p-4 hover:shadow transition-shadow"
-      aria-label={`${name} ${symbol}`}
-    >
-      <div className="flex items-baseline justify-between">
-        <div>
-          <div className="font-medium text-gray-900">{name}</div>
-          <div className="text-xs uppercase tracking-wide text-gray-500">
-            {symbol}
+    <div className="w-full text-left rounded-lg border bg-white p-4 hover:shadow transition-shadow relative">
+      <div className="flex items-baseline justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {image && (
+            <img src={image} alt={name} className="w-6 h-6 rounded-full" />
+          )}
+          <div>
+            <div className="font-medium text-gray-900">{name}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {symbol}
+            </div>
           </div>
         </div>
         <div className="text-right">
@@ -38,6 +41,7 @@ export default function InstrumentCard({
           </div>
         </div>
       </div>
+
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600">
         <div className="rounded bg-gray-50 px-2 py-1">
           <span className="text-gray-500">Mkt Cap: </span>
@@ -48,7 +52,22 @@ export default function InstrumentCard({
           <span>{volume != null ? formatNumber(volume) : "--"}</span>
         </div>
       </div>
-    </button>
+
+      {/* Clickable overlay for navigation */}
+      <button
+        onClick={onClick}
+        className="absolute inset-0 w-full h-full"
+        aria-label={`View details for ${name} ${symbol}`}
+      />
+
+      {/* Watchlist button */}
+      <div className="absolute top-3 right-3">
+        <WatchlistButton
+          instrument={{ type, id, name, symbol, image }}
+          className="!w-6 !h-6"
+        />
+      </div>
+    </div>
   );
 }
 
