@@ -1,38 +1,36 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { coingecko } from "../lib/coingecko.js";
-import InstrumentCard from "../components/InstrumentCard.jsx";
 import { finnhub } from "../lib/finnhub.js";
 import { usePolling } from "../hooks/usePolling.js";
+import InstrumentCard from "../components/InstrumentCard.jsx";
+import { CardSkeleton } from "../components/LoadingSkeleton.jsx";
 
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
-  const type = params.get("type") || "crypto"; // 'crypto' or 'stock'
-  const currency = params.get("currency") || "USD"; // for crypto pricing
-  const [timeframe, setTimeframe] = useState("24h"); // 24h | 7d
+  const type = params.get("type") || "crypto";
+  const currency = params.get("currency") || "USD";
+  const [timeframe, setTimeframe] = useState("24h");
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
 
-  // debounce search
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(search.trim().toLowerCase()), 300);
-    return () => clearTimeout(id);
-  }, [search]);
-
-  // fetch data for movers
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdate, setLastUpdate] = useState(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(search.trim().toLowerCase()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       if (type === "crypto") {
-        // Use CoinGecko markets endpoint, order by market cap desc by default
         const data = await coingecko.getMarkets({
           vs_currency: currency.toLowerCase(),
           order: "market_cap_desc",
@@ -59,8 +57,6 @@ export default function Dashboard() {
             : []
         );
       } else {
-        // Stocks: Finnhub does not provide a single "top movers" endpoint on free tier
-        // For demo, pick a representative list of tickers and fetch quotes, then sort by daily change
         const symbols = [
           "AAPL",
           "MSFT",
@@ -77,7 +73,6 @@ export default function Dashboard() {
           symbols.map(async (s) => {
             try {
               const q = await finnhub.quote(s);
-              // q.c: current price, q.pc: previous close
               const changePct =
                 q.c && q.pc ? ((q.c - q.pc) / q.pc) * 100 : null;
               return {
@@ -106,21 +101,19 @@ export default function Dashboard() {
     } catch (e) {
       setError(e?.message || "Failed to load data");
       setItems([]);
-      throw e; // Re-throw to trigger polling backoff
+      throw e;
     } finally {
       setLoading(false);
     }
   }, [type, currency, timeframe]);
 
-  // Initial load
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Poll for updates every 60 seconds
   usePolling(loadData, 60 * 1000, {
     enabled: true,
-    maxBackoff: 5 * 60 * 1000, // Max 5 minutes
+    maxBackoff: 5 * 60 * 1000,
     backoffMultiplier: 2,
     maxErrors: 5,
   });
@@ -145,21 +138,27 @@ export default function Dashboard() {
     if (!lastUpdate) return "";
     const now = new Date();
     const diffSeconds = Math.floor((now - lastUpdate) / 1000);
-
     if (diffSeconds < 60) return `Updated ${diffSeconds}s ago`;
     const diffMinutes = Math.floor(diffSeconds / 60);
     return `Updated ${diffMinutes}m ago`;
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
+    <main className="max-w-5xl mx-auto p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-6">
         <div className="flex flex-wrap gap-2 items-center">
-          <label className="text-sm text-gray-600">Market</label>
+          <label
+            htmlFor="market-select"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
+            Market
+          </label>
           <select
-            className="border rounded px-2 py-1 text-sm"
+            id="market-select"
+            className="border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             value={type}
             onChange={(e) => updateParam("type", e.target.value)}
+            aria-label="Select market type"
           >
             <option value="crypto">Crypto</option>
             <option value="stock">Stocks</option>
@@ -167,11 +166,18 @@ export default function Dashboard() {
 
           {type === "crypto" && (
             <>
-              <label className="text-sm text-gray-600 ml-3">Currency</label>
+              <label
+                htmlFor="currency-select-dashboard"
+                className="text-sm text-gray-600 dark:text-gray-400 ml-3"
+              >
+                Currency
+              </label>
               <select
-                className="border rounded px-2 py-1 text-sm"
+                id="currency-select-dashboard"
+                className="border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 value={currency}
                 onChange={(e) => updateParam("currency", e.target.value)}
+                aria-label="Select currency"
               >
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -181,11 +187,18 @@ export default function Dashboard() {
             </>
           )}
 
-          <label className="text-sm text-gray-600 ml-3">Timeframe</label>
+          <label
+            htmlFor="timeframe-select"
+            className="text-sm text-gray-600 dark:text-gray-400 ml-3"
+          >
+            Timeframe
+          </label>
           <select
-            className="border rounded px-2 py-1 text-sm"
+            id="timeframe-select"
+            className="border dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
+            aria-label="Select timeframe"
           >
             <option value="24h">24h</option>
             <option value="7d">7d</option>
@@ -193,48 +206,73 @@ export default function Dashboard() {
         </div>
 
         <div className="flex flex-col gap-2">
+          <label htmlFor="search-input" className="sr-only">
+            Search instruments
+          </label>
           <input
-            className="border rounded px-3 py-2 text-sm w-64"
+            id="search-input"
+            className="border dark:border-gray-600 rounded px-3 py-2 text-sm w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             placeholder="Search ticker or coin..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search for instruments"
           />
           {lastUpdate && (
-            <div className="text-xs text-gray-500 text-right">
+            <div
+              className="text-xs text-gray-500 dark:text-gray-400 text-right"
+              aria-live="polite"
+            >
               {formatLastUpdate()}
             </div>
           )}
         </div>
       </div>
 
-      {loading && !items.length && (
-        <div className="text-gray-600">Loading...</div>
+      {error && (
+        <div
+          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded mb-4"
+          role="alert"
+        >
+          <strong className="font-medium">Error:</strong> {error}
+        </div>
       )}
-      {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((i) => (
-          <InstrumentCard
-            key={`${i.type}:${i.id}`}
-            type={i.type}
-            id={i.id}
-            name={i.name}
-            symbol={i.symbol}
-            price={i.price}
-            changePct={i.changePct}
-            marketCap={i.marketCap}
-            volume={i.volume}
-            image={i.image}
-            onClick={() =>
-              navigate(
-                `/details/${i.type}/${i.id}?${new URLSearchParams(
-                  location.search
-                ).toString()}`
-              )
-            }
-          />
-        ))}
-      </div>
-    </div>
+      {loading && !items.length ? (
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          aria-label="Loading instruments"
+        >
+          {Array.from({ length: 9 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+              No instruments found matching "{search}"
+            </div>
+          ) : (
+            filtered.map((i) => (
+              <InstrumentCard
+                key={`${i.type}:${i.id}`}
+                type={i.type}
+                id={i.id}
+                name={i.name}
+                symbol={i.symbol}
+                price={i.price}
+                changePct={i.changePct}
+                marketCap={i.marketCap}
+                volume={i.volume}
+                image={i.image}
+                onClick={() =>
+                  navigate(`/details/${i.type}/${i.id}?${params.toString()}`)
+                }
+              />
+            ))
+          )}
+        </div>
+      )}
+    </main>
   );
 }

@@ -71,7 +71,7 @@ export default function Watchlist() {
       setLastUpdate(new Date());
     } catch (error) {
       console.error("Failed to fetch prices:", error);
-      throw error; // Re-throw to trigger polling backoff
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function Watchlist() {
   // Initial fetch and polling setup
   usePolling(fetchPrices, 30 * 1000, {
     enabled: watchlist.length > 0,
-    maxBackoff: 5 * 60 * 1000, // Max 5 minutes
+    maxBackoff: 5 * 60 * 1000,
     backoffMultiplier: 2,
     maxErrors: 5,
   });
@@ -115,10 +115,14 @@ export default function Watchlist() {
   if (watchlist.length === 0) {
     return (
       <div className="max-w-5xl mx-auto p-4">
-        <h2 className="text-2xl font-semibold mb-2">Watchlist</h2>
-        <p className="text-sm text-gray-600 mb-6">Currency: {currency}</p>
-        <div className="rounded-lg border bg-white p-8 text-center">
-          <div className="text-gray-400 mb-4">
+        <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">
+          Watchlist
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Currency: {currency}
+        </p>
+        <div className="rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
             <svg
               className="w-16 h-16 mx-auto"
               fill="none"
@@ -133,15 +137,15 @@ export default function Watchlist() {
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             Your watchlist is empty
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             Add instruments from the dashboard to track their performance.
           </p>
           <button
             onClick={() => navigate(`/?${params.toString()}`)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
           >
             Browse Instruments
           </button>
@@ -153,19 +157,25 @@ export default function Watchlist() {
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-2xl font-semibold">Watchlist</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          Watchlist
+        </h2>
         {lastUpdate && (
-          <div className="text-xs text-gray-500">{formatLastUpdate()}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {formatLastUpdate()}
+          </div>
         )}
       </div>
-      <p className="text-sm text-gray-600 mb-6">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
         Currency: {currency} • {watchlist.length} item
         {watchlist.length !== 1 ? "s" : ""}
       </p>
 
       {loading && !Object.keys(prices).length ? (
         <div className="flex items-center justify-center h-32">
-          <div className="text-gray-600">Loading prices...</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Loading prices...
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -176,7 +186,7 @@ export default function Watchlist() {
             return (
               <div
                 key={item.key}
-                className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow cursor-pointer"
                 onClick={() => handleItemClick(item)}
               >
                 <div className="flex items-center justify-between">
@@ -189,8 +199,12 @@ export default function Watchlist() {
                       />
                     )}
                     <div>
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-600">{item.symbol}</p>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {item.symbol}
+                      </p>
                     </div>
                   </div>
 
@@ -204,14 +218,14 @@ export default function Watchlist() {
                     <div className="text-right">
                       {priceData ? (
                         <>
-                          <div className="font-semibold text-gray-900">
+                          <div className="font-semibold text-gray-900 dark:text-white">
                             {formatPrice(priceData.price)}
                           </div>
                           <div
                             className={`text-sm ${
                               (priceData.change || 0) >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {priceData.change
@@ -220,7 +234,9 @@ export default function Watchlist() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-400">No data</div>
+                        <div className="text-sm text-gray-400 dark:text-gray-500">
+                          No data
+                        </div>
                       )}
                     </div>
 

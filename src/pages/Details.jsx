@@ -15,7 +15,7 @@ export default function Details() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch instrument details on mount
+  // Fetch instrument details
   useEffect(() => {
     async function fetchDetails() {
       if (!id) return;
@@ -25,7 +25,6 @@ export default function Details() {
 
       try {
         if (type === "crypto") {
-          // Get coin details from markets endpoint
           const marketData = await coingecko.getMarkets({
             vs_currency: currency.toLowerCase(),
             ids: id,
@@ -50,14 +49,11 @@ export default function Details() {
             });
           }
         } else if (type === "stock") {
-          // Get stock quote
           const quote = await finnhub.quote(id);
-
-          // Get company profile if available (this would need a separate API call)
           setDetails({
-            name: id, // Use symbol as name for now
+            name: id,
             symbol: id,
-            image: null, // No image from Finnhub free tier
+            image: null,
             currentPrice: quote.c,
             priceChange24h: quote.c && quote.pc ? quote.c - quote.pc : null,
             priceChangePercentage24h:
@@ -69,10 +65,10 @@ export default function Details() {
             high: quote.h,
             low: quote.l,
             volume: quote.v,
-            marketCap: null, // Not available in free tier
-            pe: null, // Not available in free tier
-            high52w: quote.h, // Use day high as approximation
-            low52w: quote.l, // Use day low as approximation
+            marketCap: null,
+            pe: null,
+            high52w: quote.h,
+            low52w: quote.l,
           });
         }
       } catch (err) {
@@ -112,7 +108,9 @@ export default function Details() {
     return (
       <div className="max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Loading details...</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Loading details...
+          </div>
         </div>
       </div>
     );
@@ -122,7 +120,7 @@ export default function Details() {
     return (
       <div className="max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-center h-64">
-          <div className="text-red-600 text-center">
+          <div className="text-red-600 dark:text-red-400 text-center">
             <p className="font-medium">Error loading details</p>
             <p className="text-sm">{error}</p>
           </div>
@@ -135,7 +133,9 @@ export default function Details() {
     return (
       <div className="max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">No details available</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            No details available
+          </div>
         </div>
       </div>
     );
@@ -144,7 +144,7 @@ export default function Details() {
   return (
     <div className="max-w-5xl mx-auto p-4">
       {/* Header Section */}
-      <div className="bg-white rounded-lg border p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6 mb-6 shadow-sm dark:shadow-gray-900/30">
         <div className="flex items-center gap-4 mb-4">
           {details.image && (
             <img
@@ -154,27 +154,35 @@ export default function Details() {
             />
           )}
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{details.name}</h1>
-            <p className="text-lg text-gray-600">{details.symbol}</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {details.name}
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              {details.symbol}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-gray-500">Current Price</p>
-            <p className="text-2xl font-semibold text-gray-900">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Current Price
+            </p>
+            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatPrice(details.currentPrice)}
             </p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">24h Change</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              24h Change
+            </p>
             <div className="flex items-center gap-2">
               <span
                 className={`text-xl font-semibold ${
                   (details.priceChangePercentage24h || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
                 }`}
               >
                 {formatPrice(details.priceChange24h)}
@@ -182,8 +190,8 @@ export default function Details() {
               <span
                 className={`text-sm ${
                   (details.priceChangePercentage24h || 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
                 }`}
               >
                 ({details.priceChangePercentage24h?.toFixed(2)}%)
@@ -192,8 +200,10 @@ export default function Details() {
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Market Cap</p>
-            <p className="text-xl font-semibold text-gray-900">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Market Cap
+            </p>
+            <p className="text-xl font-semibold text-gray-900 dark:text-white">
               {details.marketCap ? formatNumber(details.marketCap) : "N/A"}
             </p>
           </div>
@@ -214,104 +224,78 @@ export default function Details() {
       </div>
 
       {/* Fundamentals Panel */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-semibold mb-4">Fundamentals</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6 shadow-sm dark:shadow-gray-900/30">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          Fundamentals
+        </h3>
 
         {type === "crypto" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Market Cap</p>
-              <p className="text-lg font-semibold">
-                {details.marketCap ? formatNumber(details.marketCap) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">24h Volume</p>
-              <p className="text-lg font-semibold">
-                {details.totalVolume
-                  ? formatNumber(details.totalVolume)
-                  : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Circulating Supply</p>
-              <p className="text-lg font-semibold">
-                {details.circulatingSupply
-                  ? formatNumber(details.circulatingSupply)
-                  : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Total Supply</p>
-              <p className="text-lg font-semibold">
-                {details.totalSupply
-                  ? formatNumber(details.totalSupply)
-                  : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">All-Time High</p>
-              <p className="text-lg font-semibold text-green-600">
-                {details.ath ? formatPrice(details.ath) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">All-Time Low</p>
-              <p className="text-lg font-semibold text-red-600">
-                {details.atl ? formatPrice(details.atl) : "N/A"}
-              </p>
-            </div>
+            {[
+              ["Market Cap", details.marketCap],
+              ["24h Volume", details.totalVolume],
+              ["Circulating Supply", details.circulatingSupply],
+              ["Total Supply", details.totalSupply],
+              [
+                "All-Time High",
+                details.ath,
+                "text-green-600 dark:text-green-400",
+              ],
+              ["All-Time Low", details.atl, "text-red-600 dark:text-red-400"],
+            ].map(([label, value, color]) => (
+              <div
+                key={label}
+                className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg"
+              >
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {label}
+                </p>
+                <p
+                  className={`text-lg font-semibold text-gray-900 dark:text-white ${
+                    color || ""
+                  }`}
+                >
+                  {value
+                    ? typeof value === "number"
+                      ? label.includes("High") || label.includes("Low")
+                        ? formatPrice(value)
+                        : formatNumber(value)
+                      : "N/A"
+                    : "N/A"}
+                </p>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Previous Close</p>
-              <p className="text-lg font-semibold">
-                {details.previousClose
-                  ? formatPrice(details.previousClose)
-                  : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Open</p>
-              <p className="text-lg font-semibold">
-                {details.open ? formatPrice(details.open) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Day High</p>
-              <p className="text-lg font-semibold text-green-600">
-                {details.high ? formatPrice(details.high) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Day Low</p>
-              <p className="text-lg font-semibold text-red-600">
-                {details.low ? formatPrice(details.low) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Volume</p>
-              <p className="text-lg font-semibold">
-                {details.volume ? formatNumber(details.volume) : "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Market Cap</p>
-              <p className="text-lg font-semibold">
-                {details.marketCap ? formatNumber(details.marketCap) : "N/A"}
-              </p>
-            </div>
+            {[
+              ["Previous Close", details.previousClose],
+              ["Open", details.open],
+              ["Day High", details.high, "text-green-600 dark:text-green-400"],
+              ["Day Low", details.low, "text-red-600 dark:text-red-400"],
+              ["Volume", details.volume],
+              ["Market Cap", details.marketCap],
+            ].map(([label, value, color]) => (
+              <div
+                key={label}
+                className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg"
+              >
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {label}
+                </p>
+                <p
+                  className={`text-lg font-semibold text-gray-900 dark:text-white ${
+                    color || ""
+                  }`}
+                >
+                  {value
+                    ? label.includes("High") || label.includes("Low")
+                      ? formatPrice(value)
+                      : formatNumber(value)
+                    : "N/A"}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </div>
