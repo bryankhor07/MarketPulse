@@ -53,6 +53,7 @@ export default function Dashboard() {
                       : d.price_change_percentage_24h_in_currency,
                   marketCap: d.market_cap,
                   volume: d.total_volume,
+                  image: d.image,
                 }))
               : []
           );
@@ -87,6 +88,7 @@ export default function Dashboard() {
                   changePct,
                   marketCap: null,
                   volume: q.v ?? null,
+                  image: null,
                 };
               } catch {
                 return null;
@@ -191,6 +193,7 @@ export default function Dashboard() {
             changePct={i.changePct}
             marketCap={i.marketCap}
             volume={i.volume}
+            image={i.image}
             onClick={() =>
               navigate(
                 `/details/${i.type}/${i.id}?${new URLSearchParams(
