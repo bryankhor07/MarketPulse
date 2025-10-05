@@ -1,4 +1,4 @@
-# Crypto & Stocks Dashboard
+# MarketPulse - Crypto & Stocks Dashboard
 
 A real-time financial dashboard displaying cryptocurrency and stock market data with interactive charts, watchlists, and price alerts.
 
